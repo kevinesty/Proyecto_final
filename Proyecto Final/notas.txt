@@ -1,0 +1,4 @@
+FRONTEND: - Un sitio web utilizando las tecnologías HTML, CSS y JavaScript vistas en clase.
+BACKEND: FLASK => POST GET 
+
+

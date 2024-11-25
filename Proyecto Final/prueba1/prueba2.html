@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reseñas de Platos</title>
+  <link rel="stylesheet" href="CSS/stylesreseña1.css" /> 
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+</head>
+
+<body>
+  <header>
+    <h1>Reseñas de Platos</h1>
+    <h2>"EL BUEN SABOR"</h2>
+  </header>
+  <div class="row"> 
+    <div class="col-1 buttons">
+      <button class="like-btn" onclick="deleteReview(1)">
+        < </span>
+    </div>
+    <div class="col-10">
+      <div class="content" id="reviews-container">
+      </div>
+    </div>
+    <div class="buttons col-1">
+      <button class="like-btn" onclick="deleteReview(1)">
+        ></span>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2024 - Reseñas de Platos</p>
+  </footer>
+
+  <script>
+    var data = []
+
+    function obtenerPlatos() {
+      const requestOptions = {
+        method: "GET",
+      };  
+    
+      fetch("http://127.0.0.1:5000/platos", requestOptions)
+      //aqui hay unos segundos para la respuesta
+        .then((response) => response.json())
+        .then((result) => data = result)    
+        .then(() => loadReviews())
+        .catch((error) => console.error(error));
+    }
+    function crearComentario(idPlato, reseña, likes, dislikes) {
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+      const requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        body: JSON.stringify({ reseña: reseña, likes: likes, dislikes: dislikes }),
+      };
+      fetch(`http://127.0.0.1:5000/plato/${idPlato}/comentario`, requestOptions)
+        .then((response) => obtenerPlatos())
+        .catch((error) => console.error(error));
+    }
+    obtenerPlatos();
+    function loadReviews() {
+      const container = document.getElementById("reviews-container");
+      container.innerHTML = "";
+      data.forEach((review, index) => {
+        const reviewElement = document.createElement("div");
+        reviewElement.className = "review";
+        reviewElement.id = `review-${index}`;
+
+        const imageHTML = review.plato.image
+          ? `<img class="plato-image" src="${review.plato.image}" alt="${review.plato.nombre}" class="dish-image">`
+          : "";
+        reviewElement.innerHTML = ` 
+<div class="row">
+    <div class="col-6">
+        ${imageHTML}
+        <h2>${review.plato.nombre}</h2>
+
+        <div class="row">
+            <div class="col-6">
+                <button class="like-btn" onclick="updateLikes(${index})">Me gusta <span class="like-count">${review.plato.likes}</span></button>
+            </div>
+            <div class="col-6">
+                <button class="dislike-btn" onclick="updateDislikes(${index})">No me gusta <span class="dislike-count">${review.plato.dislikes}</span></button>
+            </div>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="comments" id="comments-${index}">
+            ${review.comentarios.map((comment) => `
+            <div class="comment">${comment.reseña}</div>`).join("")}
+        </div>
+        <div class="comment-box">
+            <input type="text" placeholder="Escribe un comentario..." class="comment-input" id="comment-input-${index}">
+            <button class="comment-btn" onclick="addComment(${index})">Comentar</button>
+        </div>
+    </div>
+</div>`;
+       
+        container.appendChild(reviewElement);
+      });
+    }
+
+    function updateLikes(index) {
+      data[index].plato.likes += 1;
+      loadReviews();
+    }
+    
+    function updateDislikes(index) {
+      data[index].plato.dislikes += 1;
+      loadReviews();
+    }
+
+    function addComment(index) {
+      const commentInput = document.getElementById(`comment-input-${index}`);
+      const commentText = commentInput.value.trim();
+      if (commentText) {
+        commentInput.value = "";
+       const primeraLetra = commentText.slice(0,1).toUpperCase()
+       const texto = commentText.slice(1)
+      crearComentario(data[index].id, primeraLetra + texto, data[index].plato.likes, data[index].plato.dislikes);
+
+      }
+    } 
+  </script>
+</body>
+
+</html>
